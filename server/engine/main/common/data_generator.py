@@ -13,9 +13,9 @@ class RandDataGenerator:
         self.rs   = np.random.RandomState()
         
     def generate_multivariate_norm(self, mean = None, cov = None, size = None):
-
         if mean is None or cov is None: 
-            raise TypeError('generate_multivariate_norm() takes at least 2 positional arguments.')
+            raise TypeError(('generate_multivariate_norm() takes at least '
+                             '2 positional arguments.'))
         
         exec_size = self.size
         if size is not None and size > 0: 

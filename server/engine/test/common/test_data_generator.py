@@ -12,7 +12,7 @@ import data_generator
 
 class TestRandDataGenerator(unittest.TestCase):
 
-    def test_create_multivariate_norm_success(self): 
+    def test_success_create_multivariate_norm(self): 
         rd_gen = data_generator.RandDataGenerator()
         assert_is_not_none(rd_gen)
 
@@ -25,6 +25,15 @@ class TestRandDataGenerator(unittest.TestCase):
         print ''
         print 'sample: '
         print sample
+
+    def test_success_get_samples_length(self): 
+        rd_gen = data_generator.RandDataGenerator()
+
+        mean = [1,1,1]
+        cov  = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        size = 10
+        sample = rd_gen.generate_multivariate_norm(mean, cov, size)
+        eq_(size, len(sample))
 
 if __name__ == '__main__':
     unittest.main()
