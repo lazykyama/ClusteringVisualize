@@ -20,6 +20,7 @@ class VisualizeServer(BaseHTTPRequestHandler):
     DEFAULT_PORT = 8280
 
     def do_GET(self):
+        # リクエストをパース
         parsed_path = urlparse.urlparse(self.path)
         message_parts = [
                 'CLIENT VALUES:',
