@@ -3,10 +3,12 @@
 
 from BaseHTTPServer import BaseHTTPRequestHandler
 import urlparse
+import httplib
 
 import os
 
 from rest_controller import *
+from http_responose_wrapper import *
 
 # from http://ja.pymotw.com/2/BaseHTTPServer/index.html
 class VisualizeServer(BaseHTTPRequestHandler):
@@ -14,9 +16,6 @@ class VisualizeServer(BaseHTTPRequestHandler):
     CONTENTS_ROOT_PATH = '../../contents/'
     FAVICON_PATH = CONTENTS_ROOT_PATH + 'favicon.ico'
     
-    KEY_RESPONSE_SC = 'sc'
-    KEY_RESPONSE_BODY = 'body'
-
     DEFAULT_PORT = 8280
 
     def do_GET(self):
@@ -52,9 +51,9 @@ class VisualizeServer(BaseHTTPRequestHandler):
             parsed_path.path, parsed_path.query)
         
         # construct response.
-        self.send_response(response[VisualizeServer.KEY_RESPONSE_SC])
+        self.send_response(response[HttpResponseWrapper.KEY_RESPONSE_SC])
         self.end_headers()
-        self.wfile.write(response[VisualizeServer.KEY_RESPONSE_BODY])
+        self.wfile.write(response[HttpResponseWrapper.KEY_RESPONSE_BODY])
         
         return
 
@@ -67,7 +66,7 @@ class VisualizeServer(BaseHTTPRequestHandler):
         elif requested_path.startswith('/favicon.ico'):
             return self.return_favicon
         else:
-            return self.return_not_found
+            return HttpResponseWrapper.return_not_found
 
     # 指定パスのコンテンツを返す
     def return_contents(self, requested_path, requested_query):
@@ -87,12 +86,13 @@ class VisualizeServer(BaseHTTPRequestHandler):
         response = VisualizeServer.create_empty_response()
         if not abs_user_path.startswith(abs_contents_root):
             # 上位ディレクトリを見ようとしているためNG
-            response[VisualizeServer.KEY_RESPONSE_SC] = 400
-            response[VisualizeServer.KEY_RESPONSE_BODY] = 'Bad Request.'
+            response[HttpResponseWrapper.KEY_RESPONSE_SC] = httplib.BAD_REQUEST
+            response[HttpResponseWrapper.KEY_RESPONSE_BODY] = httplib.response[
+                httplib.BAD_REQUEST]
 
         elif os.path.exists(abs_user_path):
             # 上位ディレクトリを見ようとしておらず、かつ指定ファイルが存在
-            response[VisualizeServer.KEY_RESPONSE_BODY] = self.load_file(
+            response[HttpResponseWrapper.KEY_RESPONSE_BODY] = self.load_file(
                 abs_user_path)
         else:
             # 上位ディレクトリを見ていないが、指定ファイルがない
@@ -114,7 +114,7 @@ class VisualizeServer(BaseHTTPRequestHandler):
         response = VisualizeServer.create_empty_response()
         if os.path.exists(VisualizeServer.FAVICON_PATH):
             # @todo キャッシュしておく？
-            response[VisualizeServer.KEY_RESPONSE_BODY] = self.load_file(
+            response[HttpResponseWrapper.KEY_RESPONSE_BODY] = self.load_file(
                 VisualizeServer.FAVICON_PATH)
         else: 
             response = self.return_not_found(
@@ -122,12 +122,6 @@ class VisualizeServer(BaseHTTPRequestHandler):
 
         return response
 
-    # 不許可リクエストなどには404を返す
-    def return_not_found(self, requested_path, requested_query):
-        return {VisualizeServer.KEY_RESPONSE_SC: 404,
-                VisualizeServer.KEY_RESPONSE_BODY: ('%s is not found.'
-                                                    % requested_path)}
-        
     # 指定パスのファイルからテキストで読み込んでくる
     def load_file(self, abs_file_path):
         message = ''
@@ -135,12 +129,7 @@ class VisualizeServer(BaseHTTPRequestHandler):
             message += line
         return message
         
-    @staticmethod
-    def create_empty_response():
-        return {VisualizeServer.KEY_RESPONSE_SC: 200,
-                VisualizeServer.KEY_RESPONSE_BODY: ''}
 
-    
 if __name__ == '__main__':
     from BaseHTTPServer import HTTPServer
     server = HTTPServer(('localhost', VisualizeServer.DEFAULT_PORT),
