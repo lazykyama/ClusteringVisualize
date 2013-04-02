@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from kmeans_rest_controller import *
-from http_responose_wrapper import *
+from http_response_wrapper import *
 
 import httplib
 
@@ -11,18 +11,15 @@ class RestController:
     def execute_with_subcontroller(self, command, query):
         # 本当はこのへんでメッセージキューを利用したほうがいいと思いますが、
         # 簡易実装ということでひとつ。。。
+        response = ''
         try:
             subcontroller = RestSubControllerFactory.create_subcontroller(command)
+            response = subcontroller.execute(query)
         except:
             # 例外発生時は500エラー
-            err_response = HttpResponseWrapper.create_empty_response()
-            err_response[HttpResponseWrapper.KEY_RESPONSE_SC] = httplib.INTERNAL_SERVER_ERROR
-            err_response[HttpResponseWrapper.KEY_RESPONSE_BODY] = httplib.response[
-                httplib.INTERNAL_SERVER_ERROR]
-            return err_response
-        
-        response = subcontroller.execute(query)
-        return response
+            response = HttpResponseWrapper.create_internal_server_error()
+        finally: 
+            return response
 
 class RestSubControllerFactory:
     

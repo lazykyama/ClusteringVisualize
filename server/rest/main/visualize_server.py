@@ -8,7 +8,7 @@ import httplib
 import os
 
 from rest_controller import *
-from http_responose_wrapper import *
+from http_response_wrapper import *
 
 # from http://ja.pymotw.com/2/BaseHTTPServer/index.html
 class VisualizeServer(BaseHTTPRequestHandler):
@@ -47,8 +47,9 @@ class VisualizeServer(BaseHTTPRequestHandler):
 
         # dispatch.
         # パフォーマンスを気にする場合は、self.wfileを渡して、ストリーム処理させるべき？
+        parsed_query = dict(qc.split("=") for qc in parsed_path.query.split("&"))
         response = (self.dispatch_request(parsed_path.path))(
-            parsed_path.path, parsed_path.query)
+            parsed_path.path, parsed_query)
         
         # construct response.
         self.send_response(response[HttpResponseWrapper.KEY_RESPONSE_SC])
@@ -83,12 +84,10 @@ class VisualizeServer(BaseHTTPRequestHandler):
         abs_user_path = os.path.abspath(
             VisualizeServer.CONTENTS_ROOT_PATH + contents_name)
 
-        response = VisualizeServer.create_empty_response()
+        response = HttpResponseWrapper.create_empty_response()
         if not abs_user_path.startswith(abs_contents_root):
             # 上位ディレクトリを見ようとしているためNG
-            response[HttpResponseWrapper.KEY_RESPONSE_SC] = httplib.BAD_REQUEST
-            response[HttpResponseWrapper.KEY_RESPONSE_BODY] = httplib.response[
-                httplib.BAD_REQUEST]
+            response = HttpResponseWrapper.create_bad_request_response()
 
         elif os.path.exists(abs_user_path):
             # 上位ディレクトリを見ようとしておらず、かつ指定ファイルが存在
@@ -96,7 +95,8 @@ class VisualizeServer(BaseHTTPRequestHandler):
                 abs_user_path)
         else:
             # 上位ディレクトリを見ていないが、指定ファイルがない
-            response = self.return_not_found(requested_path, requested_query)
+            response = HttpResponseWrapper.return_not_found(requested_path,
+                                                            requested_query)
             
         return response
 

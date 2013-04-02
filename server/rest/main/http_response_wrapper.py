@@ -14,6 +14,16 @@ class HttpResponseWrapper:
                 HttpResponseWrapper.KEY_RESPONSE_BODY: ('%s is not found.'
                                                     % requested_path)}
     @staticmethod
+    def create_bad_request_response():
+        return {HttpResponseWrapper.KEY_RESPONSE_SC: httplib.BAD_REQUEST,
+                HttpResponseWrapper.KEY_RESPONSE_BODY: httplib.response[httplib.BAD_REQUEST]}
+
+    @staticmethod
+    def create_internal_server_error():
+        return {HttpResponseWrapper.KEY_RESPONSE_SC: httplib.INTERNAL_SERVER_ERROR,
+                HttpResponseWrapper.KEY_RESPONSE_BODY: httplib.response[httplib.INTERNAL_SERVER_ERROR]}
+
+    @staticmethod
     def create_empty_response():
         return {HttpResponseWrapper.KEY_RESPONSE_SC: httplib.OK,
                 HttpResponseWrapper.KEY_RESPONSE_BODY: ''}

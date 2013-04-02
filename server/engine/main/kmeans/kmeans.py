@@ -188,3 +188,7 @@ class KMeans:
     # 全体のサンプル数を返す
     def get_samples_size(self):
         return len(self._samples)
+
+    # サンプルを返す
+    def get_samples(self):
+        return self._samples
