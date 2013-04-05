@@ -4,8 +4,6 @@
 from kmeans_rest_controller import *
 from http_response_wrapper import *
 
-import httplib
-
 class RestController:
     # コマンドとクエリをサブコントローラに渡して実行させる
     def execute_with_subcontroller(self, command, query):
@@ -15,8 +13,9 @@ class RestController:
         try:
             subcontroller = RestSubControllerFactory.create_subcontroller(command)
             response = subcontroller.execute(query)
-        except:
+        except Exception, detail:
             # 例外発生時は500エラー
+            print 'internal server error: ', detail
             response = HttpResponseWrapper.create_internal_server_error()
         finally: 
             return response

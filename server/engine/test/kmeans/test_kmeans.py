@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# インクルードに絡むおまじない
+# インポートに絡むおまじない
 import sys, os
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../main/common'))
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../main/kmeans'))
@@ -33,6 +33,21 @@ class TestKMeans(TestKMeansBase):
         kmeans_instance = KMeans()
         samples = self.create_test_random_samples()
         kmeans_instance.set_samples(samples)
+
+        # 学習結果の是非については、ここでは確認しない
+        ok_(kmeans_instance.learn())
+        ok_(not kmeans_instance.learn())
+
+    # 初期割り当てを指定して学習に成功すること
+    def test_success_learning_completely_with_set_init_assigns(self):
+        kmeans_instance = KMeans()
+        samples = self.create_test_random_samples()
+        kmeans_instance.set_samples(samples)
+
+        # 初期割り当てを実施
+        rand_assigns = KMeans.generate_random_assigns(
+            kmeans_instance.k, len(samples))
+        kmeans_instance.set_init_assign(rand_assigns)
 
         # 学習結果の是非については、ここでは確認しない
         ok_(kmeans_instance.learn())

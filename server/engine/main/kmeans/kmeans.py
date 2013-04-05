@@ -27,6 +27,33 @@ class KMeans:
     def _reinitialize(self):
         self.converged = False
         self.started   = False
+
+    # 初期割り当て
+    def set_init_assign(self, assigns = None):
+        if assigns is None:
+            raise TypeError(('set_init_assign() takes at least '
+                             'a positional argument.'))
+
+        # 入力されたアサインリストが妥当かチェックする
+        if len(assigns) != len(self._samples):
+            raise ValueError(('assign list is invalid length: '
+                              'expected = ' + str(len(self._samples)) + ', '
+                              'actual = ' + str(len(assigns)) + '.'))
+        assign_min = np.min(assigns)
+        assign_max = np.max(assigns)
+        if assign_min < 0 or self.k <= assign_max:
+            raise ValueError(('assign list has invalid value: '
+                              'expected = (0,' + assign_max  + '), '
+                              'actual = (' + assign_min +
+                              ', ' + assign_max  + ').'))
+        
+        # 割り当てに応じてクラスタへのサンプル振り分けを実施
+        KMeans._assign_cluster(self._clusters, self._samples, assigns)
+
+        # 各クラスタのセントロイドを更新する
+        self._centroids = [cluster.calc_centroid() 
+                           for cluster in self._clusters]
+        self.started = True
         
     # サンプルを受け取る
     def set_samples(self, samples = None):
@@ -88,7 +115,26 @@ class KMeans:
             cnt += 1
             
         return True
+
+    # ランダムなクラスタ割り当てリストを生成
+    @staticmethod
+    def generate_random_assigns(clusters_size = None, samples_size = None):
+        if clusters_size is None or samples_size is None:
+            raise TypeError(('generate_random_assign() takes at least '
+                             '2 positional arguments.'))
+
+        # ランダムなインデックスリストを生成
+        # 実装の都合上、みんなだいたい同じように割り当てる
+        if samples_size < clusters_size:
+            raise TypeError(('#samples < #clusters is invalid.'))
+        random_cluster_assigns = np.hstack((
+                np.arange(clusters_size), 
+                np.random.randint(0, clusters_size,
+                                  samples_size - clusters_size)))
+                                  # samples.shape[0] - clusters_size)))
         
+        return random_cluster_assigns
+    
     # ランダムなクラスタ割り当てを実施
     @staticmethod
     def assign_random_cluster(clusters = None, samples = None):
@@ -101,12 +147,8 @@ class KMeans:
 
         # 各クラスタに割り当てるサンプル数を決定
         # @todo とりあえず各クラスタに均等に割り当てる
-        if samples_size < clusters_size:
-            raise TypeError(('#samples < #clusters is invalid.'))
-        random_cluster_assigns = np.hstack((
-                np.arange(clusters_size), 
-                np.random.randint(0, clusters_size,
-                                  samples.shape[0] - clusters_size)))
+        random_cluster_assigns = KMeans.generate_random_assigns(
+            clusters_size, samples_size)
         
         # サンプルにクラスタを割り当てる
         KMeans._assign_cluster(clusters, samples, random_cluster_assigns)
@@ -192,3 +234,7 @@ class KMeans:
     # サンプルを返す
     def get_samples(self):
         return self._samples
+
+    # サンプルをリストとして返す
+    def get_samples_as_list(self):
+        return self._samples.tolist()

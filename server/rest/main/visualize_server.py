@@ -3,7 +3,6 @@
 
 from BaseHTTPServer import BaseHTTPRequestHandler
 import urlparse
-import httplib
 
 import os
 
