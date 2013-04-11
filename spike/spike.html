@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>WebGLスパイク</title>
+    <style>
+      body {
+      color: #cccccc;
+      font-family:Monospace;
+      font-size:13px;
+      text-align:center;
+      
+      background-color: #050505;
+      margin: 0px;
+      overflow: hidden;
+      }
+
+      #controls {
+      position: absolute;
+      top: 0px; width: 100%;
+      padding: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+    <div id="controls">
+      <button id="change_btn">start/stop</button>
+      <button id="step_btn">step</button>
+    </div>
+    <script src="../server/contents/js/threejs/three.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
