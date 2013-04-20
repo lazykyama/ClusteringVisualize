@@ -2,69 +2,6 @@
 // refers examples/webgl_buffergeometry.html in three.js 
 kyama.app = {};
 
-// generate random color on 
-kyama.app.generateRandomColorFromCircle = function(splitSize, index) {
-    if (splitSize <= 0) {
-	throw new Error('negative splitSize[' + splitSize + '] is invalid.');
-    }
-    if (index < 0) {
-	throw new Error('negative index[' + index + '] is invalid.');
-    }
-
-    var PI_DEGREE = 360.0;
-    var interval = PI_DEGREE / splitSize;
-    var hue = (index * interval);
-    var sat = 1.0;
-    var val = 1.0;
-
-    // this code written in reference to the following site and Wikipedia.
-    // http://www.technotype.net/tutorial/tutorial.php?fileId=%7BImage%20processing%7D&sectionId=%7B-converting-between-rgb-and-hsv-color-space%7D
-    var hi = Math.floor(hue / 60.0) % 6;
-    var f  = (hue / 60.0) - hi;
-    var p  = Math.round(val * (1.0 - sat));
-    var q  = Math.round(val * (1.0 - sat * f));
-    var t  = Math.round(val * (1.0 - sat * (1.0 - f)));
-
-    switch(hi) {
-    case 0:
-	return {
-	    r: val,
-	    g: t,
-	    b: p
-	};
-    case 1:
-	return {
-	    r: q,
-	    g: val,
-	    b: p
-	};
-    case 2:
-	return {
-	    r: p,
-	    g: val,
-	    b: t
-	};
-    case 3:
-	return {
-	    r: p,
-	    g: q,
-	    b: val
-	};
-    case 4:
-	return {
-	    r: t,
-	    g: p,
-	    b: val
-	};
-    case 5:
-	return {
-	    r: val,
-	    g: p,
-	    b: q
-	};
-    }
-};
-
 kyama.app.init = function() {
     // load container object.
     kyama.app.container = document.getElementById('container');
@@ -87,38 +24,73 @@ kyama.app.init = function() {
     light2.position.set(0, -1, 0);
     kyama.app.scene.add(light2);
 
-    // prepare label assigns.
-    var triangles = kyama.dummy.samples.length;
-    var LABELS_NUM = 5;
+    // ジオメトリを初期化
+    initializeSamplesGeometry();
 
-    var randomAssigns = [];
-    for (var i = 0; i < triangles; i++) {
-	var eachAssign = Math.floor(Math.random() * 1000) % LABELS_NUM;
-	randomAssigns.push(eachAssign);
-    }
+    kyama.app.renderer = new THREE.WebGLRenderer({
+	antialias: false, 
+	clearColor: 0x333333, 
+	clearAlpha: 1,
+	alpha: false
+    });
+    kyama.app.renderer.setSize(window.innerWidth, window.innerHeight);
+    kyama.app.renderer.setClearColor(kyama.app.scene.fog.color, 1);
+    
+    kyama.app.renderer.gammaInput = true;
+    kyama.app.renderer.gammaOutput = true;
+    kyama.app.renderer.physicallyBasedShading = true;
+    
+    kyama.app.container.appendChild(kyama.app.renderer.domElement);
+    
+    // add event listener.
+    window.addEventListener('resize', kyama.app.onWindowResize, false);
+
+    var changeBtn = document.getElementById('change_btn');
+    var stepBtn = document.getElementById('step_btn');
+    kyama.app.isRunning = true;
+    
+    changeBtn.addEventListener('click', function() {
+	kyama.app.isRunning = !kyama.app.isRunning;
+	kyama.app.currTime = Date.now();
+	kyama.app.animate();
+    }, false);
+    stepBtn.addEventListener('click', function() {
+	kyama.app.isRunning = false;
+	kyama.app.animate();	
+    }, false);
+
+    // store now.
+    kyama.app.currTime = Date.now();
+};
+
+/**
+ * ジオメトリ初期化
+ */
+var initializeSamplesGeometry = function() {
 
     // prepare geometries.
-    var geometry = new THREE.BufferGeometry();
-    geometry.attributes = {
+    var pointsLength = kyama.dummy.triangles + kyama.dummy.means.length;
+    var samplesGeometry = new THREE.BufferGeometry();
+    samplesGeometry.attributes = {
 	index: {
 	    itemSize: 1,
-	    array: new Uint16Array(triangles * 3),
-	    numItems: triangles * 3
+	    array: new Uint16Array(pointsLength * 3),
+	    numItems: pointsLength * 3
 	},
 	position: {
 	    itemSize: 3,
-	    array: new Float32Array(triangles * 3 * 3),
-	    numItems: triangles * 3 * 3
+	    array: new Float32Array(pointsLength * 3 * 3),
+	    numItems: pointsLength * 3 * 3
 	},
 	normal: {
 	    itemSize: 3,
-	    array: new Float32Array(triangles * 3 * 3),
-	    numItems: triangles * 3 * 3
+	    array: new Float32Array(pointsLength * 3 * 3),
+	    numItems: pointsLength * 3 * 3
 	},
 	color: {
 	    itemSize:  3,
-	    array: new Float32Array(triangles * 3 * 3),
-	    numItems: triangles * 3 * 3
+	    array: new Float32Array(pointsLength * 3 * 3),
+	    numItems: pointsLength * 3 * 3
 	}
     }
 
@@ -127,19 +99,19 @@ kyama.app.init = function() {
     // for indices to fit into 16 bit integer number
     // floor(2^16 / 3) = 21845
     var chunkSize = 21845;
-    var indices = geometry.attributes.index.array;
+    var indices = samplesGeometry.attributes.index.array;
     for (var i = 0; i < indices.length; i++) {
 	indices[i] = i % (3 * chunkSize);
     }
     
-    var positions = geometry.attributes.position.array;
-    var normals = geometry.attributes.normal.array;
-    var colors = geometry.attributes.color.array;
+    var positions = samplesGeometry.attributes.position.array;
+    var normals = samplesGeometry.attributes.normal.array;
+    var colors = samplesGeometry.attributes.color.array;
     
     var color = new THREE.Color();
     
-    var n = 150, n2 = n/2;	// triangles spread in the cube
-    var d = 36, d2 = d/2;	// individual triangle size
+    var n = 200, n2 = n/2;	// triangles spread in the cube
+    var d = 24, d2 = d/2;	// individual triangle size
     
     var pA = new THREE.Vector3();
     var pB = new THREE.Vector3();
@@ -147,11 +119,19 @@ kyama.app.init = function() {
 
     var cb = new THREE.Vector3();
     var ab = new THREE.Vector3();
+    var samplesCompleted = false;
     
     for (var i = 0; i < positions.length; i += 9) {
 	// positions
 	var sampleIndex = Math.floor(i / 9);
-	
+	if (sampleIndex >= kyama.dummy.samples.length) {
+	    sampleIndex = sampleIndex - kyama.dummy.samples.length;
+	    samplesCompleted = true;
+	    d = 60;
+	} else {
+	    samplesCompleted = false;
+	    d = 24;
+	}
 	var x = kyama.dummy.samples[sampleIndex][0] * n - n2;
 	var y = kyama.dummy.samples[sampleIndex][1] * n - n2;
 	var z = kyama.dummy.samples[sampleIndex][2] * n - n2;
@@ -208,78 +188,58 @@ kyama.app.init = function() {
 	normals[i + 8] = nz;
 	
 	// colors
-	var sampleLabel = randomAssigns[sampleIndex];
+	var sampleLabel = (samplesCompleted) ?
+	    sampleIndex : kyama.dummy.randomAssigns[sampleIndex];
 	var tmpColor = kyama.app.generateRandomColorFromCircle(
-	    LABELS_NUM, sampleLabel);
-	color.setRGB(tmpColor.r, tmpColor.g, tmpColor.b);
+	    kyama.dummy.LABELS_NUM, sampleLabel);
+	if (samplesCompleted) {
+	    color.setRGB(tmpColor.r, tmpColor.g, tmpColor.b);
+	} else {
+	    color.setRGB(tmpColor.r, tmpColor.g, tmpColor.b);
+	}
 
 	colors[i]     = color.r;
 	colors[i + 1] = color.g;
 	colors[i + 2] = color.b;
 	
-	colors[ i + 3 ] = color.r;
-	colors[ i + 4 ] = color.g;
-	colors[ i + 5 ] = color.b;
+	colors[i + 3] = color.r;
+	colors[i + 4] = color.g;
+	colors[i + 5] = color.b;
 	
 	colors[i + 6] = color.r;
 	colors[i + 7] = color.g;
 	colors[i + 8] = color.b;
     }
-    geometry.offsets = [];
     
-    var offsets = triangles / chunkSize;
+    samplesGeometry.offsets = [];
+    var offsets = pointsLength / chunkSize;
     for (var i = 0; i < offsets; i++) {
 	var offset = {
 	    start: i * chunkSize * 3,
 	    index: i * chunkSize * 3,
-	    count: Math.min(triangles - (i * chunkSize), chunkSize) * 3
+	    count: Math.min(pointsLength - (i * chunkSize), chunkSize) * 3
 	};
-	geometry.offsets.push(offset);
+	samplesGeometry.offsets.push(offset);
     }
-    geometry.computeBoundingSphere();
+    samplesGeometry.computeBoundingSphere();
     
-    var material = new THREE.MeshPhongMaterial( {
-	color: 0xaaaaaa, ambient: 0xaaaaaa, specular: 0xffffff, shininess: 250,
-	side: THREE.DoubleSide, vertexColors: THREE.VertexColors
-    } );
-    
-    kyama.app.mesh = new THREE.Mesh(geometry, material);
-    kyama.app.scene.add(kyama.app.mesh);
-    
-    kyama.app.renderer = new THREE.WebGLRenderer({
-	antialias: false, 
-	clearColor: 0x333333, 
-	clearAlpha: 1,
-	alpha: false
+    var samplesMaterial = new THREE.MeshBasicMaterial({
+	color: 0xffffff,
+	shininess: 255,
+	side: THREE.DoubleSide,
+	vertexColors: THREE.VertexColors
     });
-    kyama.app.renderer.setSize(window.innerWidth, window.innerHeight);
-    kyama.app.renderer.setClearColor(kyama.app.scene.fog.color, 1);
+	/*new THREE.MeshPhongMaterial({
+	color: 0xaaaaaa,
+	ambient: 0xaaaaaa,
+	specular: 0xffffff,
+	shininess: 250,
+	side: THREE.DoubleSide,
+	vertexColors: THREE.VertexColors
+    });*/
     
-    kyama.app.renderer.gammaInput = true;
-    kyama.app.renderer.gammaOutput = true;
-    kyama.app.renderer.physicallyBasedShading = true;
-    
-    kyama.app.container.appendChild(kyama.app.renderer.domElement);
-    
-    // add event listener.
-    window.addEventListener('resize', kyama.app.onWindowResize, false);
-
-    var changeBtn = document.getElementById('change_btn');
-    var stepBtn = document.getElementById('step_btn');
-    kyama.app.isRunning = true;
-    
-    changeBtn.addEventListener('click', function() {
-	kyama.app.isRunning = !kyama.app.isRunning;
-	kyama.app.currTime = Date.now();
-	kyama.app.animate();
-    }, false);
-    stepBtn.addEventListener('click', function() {
-	kyama.app.isRunning = false;
-	kyama.app.animate();	
-    }, false);
-
-    // store now.
-    kyama.app.currTime = Date.now();
+    kyama.app.samplesMesh = new THREE.Mesh(samplesGeometry, samplesMaterial);
+    kyama.app.scene.add(kyama.app.samplesMesh);
 };
 
 kyama.app.onWindowResize = function() {
@@ -302,16 +262,16 @@ kyama.app.animate = function() {
 kyama.app.render = function() {
     if (false) {
 	var time = Date.now() * 0.001;
-	kyama.app.mesh.rotation.x = time * 0.25;
-	kyama.app.mesh.rotation.y = time * 0.5;
+	kyama.app.samplesMesh.rotation.x = time * 0.25;
+	kyama.app.samplesMesh.rotation.y = time * 0.5;
     } else {
 	var delta = (kyama.app.currTime - kyama.app.prevTime);
-	var tmpX = kyama.app.mesh.rotation.x;
-	var tmpY = kyama.app.mesh.rotation.y;
+	var tmpX = kyama.app.samplesMesh.rotation.x;
+	var tmpY = kyama.app.samplesMesh.rotation.y;
 	// PI rad. / 5000msec
-	kyama.app.mesh.rotation.x = tmpX + (Math.PI * delta / 5000);
+	kyama.app.samplesMesh.rotation.x = tmpX + (Math.PI * delta / 5000);
 	// PI rad. / 2500msec
-	kyama.app.mesh.rotation.y = tmpY + (Math.PI * delta / 2500);
+	kyama.app.samplesMesh.rotation.y = tmpY + (Math.PI * delta / 2500);
     }
     
     kyama.app.renderer.render(

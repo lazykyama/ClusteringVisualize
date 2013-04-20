@@ -1109,6 +1109,53 @@ kyama.dummy.samples = [
 ];
 }
 
-if (true) {
+var culled = true;
+if (culled) {
     kyama.dummy.samples = kyama.dummy.samples.slice(500, 1000)
 }
+
+// prepare label assigns.
+kyama.dummy.triangles = kyama.dummy.samples.length;
+kyama.dummy.LABELS_NUM = 5;
+
+kyama.dummy.updateRandomAssigns = function() {
+    kyama.dummy.randomAssigns = [];
+    
+    for (var i = 0; i < kyama.dummy.triangles; i++) {
+	var eachAssign = Math.floor(Math.random() * 1000) % kyama.dummy.LABELS_NUM;
+	kyama.dummy.randomAssigns.push(eachAssign);
+    }
+};
+kyama.dummy.updateRandomAssigns();
+
+// calculate samples averages.
+kyama.dummy.updateMeans = function() {
+    kyama.dummy.means = [];
+
+    for (var i = 0; i < kyama.dummy.LABELS_NUM; i++) {
+	var eachLabelSamples = kyama.dummy.samples.filter(
+	    function(elm, idx) {
+		return (kyama.dummy.randomAssigns[idx] === i);
+	    }
+	);
+	
+	// ベクトルの要素ごとに加算
+	var sumEachLabelSamples = eachLabelSamples.reduce(
+	    function(a, b) {
+		var retVec = [];
+		for (var j = 0; j < b.length; j++) {
+		    retVec.push(a[j] + b[j]);
+		}
+		return retVec;
+	    }
+	);
+	
+	// ベクトルの要素ごとに平均をとる
+	kyama.dummy.means.push(sumEachLabelSamples.map(
+	    function(elm) {
+		return elm / eachLabelSamples.length;
+	    }
+	));
+    }
+};
+kyama.dummy.updateMeans();
