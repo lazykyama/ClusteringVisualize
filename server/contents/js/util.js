@@ -40,9 +40,9 @@ kyama.util.generateRandomColorFromCircle = function(splitSize, index) {
     // http://www.technotype.net/tutorial/tutorial.php?fileId=%7BImage%20processing%7D&sectionId=%7B-converting-between-rgb-and-hsv-color-space%7D
     var hi = Math.floor(hue / 60.0) % 6;
     var f  = (hue / 60.0) - hi;
-    var p  = Math.round(val * (1.0 - sat));
-    var q  = Math.round(val * (1.0 - sat * f));
-    var t  = Math.round(val * (1.0 - sat * (1.0 - f)));
+    var p  = val * (1.0 - sat);
+    var q  = val * (1.0 - sat * f);
+    var t  = val * (1.0 - sat * (1.0 - f));
 
     switch(hi) {
     case 0:

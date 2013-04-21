@@ -57,15 +57,6 @@ kyama.app.init = function() {
 	kyama.dummy.updateRandomAssigns();
 	kyama.dummy.updateMeans();
 
-	/*
-	var prevChildren = kyama.app.group.children;
-	var prevChildrenLength = prevChildren.length;
-	for (var i = prevChildrenLength; i >= 0; i--) {
-	    var child = prevChildren[i];
-	    kyama.app.group.remove(child);
-	}
-	*/
-	
 	updateSamplesGeometry(false);
 	kyama.app.animate();	
     }, false);

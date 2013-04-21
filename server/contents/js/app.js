@@ -177,6 +177,7 @@ kyama.app.update = function(dataJson) {
     kyama.app.data.sessionId  = sessionId;
     kyama.app.data.rawData    = rawData;
     kyama.app.data.centroids  = centroids;
+    kyama.app.data.clusterSize = centroids.length;
 
     console.debug('isConverged: ' + converged);
     if (converged) {
