@@ -29,8 +29,6 @@ kyama.app.init = function() {
 
     kyama.app.renderer = new THREE.WebGLRenderer({
 	antialias: false, 
-	clearColor: 0x333333, 
-	clearAlpha: 1,
 	alpha: false
     });
     kyama.app.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -59,14 +57,16 @@ kyama.app.init = function() {
 	kyama.dummy.updateRandomAssigns();
 	kyama.dummy.updateMeans();
 
+	/*
 	var prevChildren = kyama.app.group.children;
 	var prevChildrenLength = prevChildren.length;
 	for (var i = prevChildrenLength; i >= 0; i--) {
 	    var child = prevChildren[i];
 	    kyama.app.group.remove(child);
 	}
+	*/
 	
-	updateSamplesGeometry();
+	updateSamplesGeometry(false);
 	kyama.app.animate();	
     }, false);
 
@@ -77,71 +77,117 @@ kyama.app.init = function() {
 /**
  * ジオメトリ更新
  */
-var updateSamplesGeometry = function() {
+var updateSamplesGeometry = function(isInit) {
     // init samples.
-    var linesGeometry = new THREE.Geometry();
-    var linesMaterial = new THREE.LineBasicMaterial({
-	vertexColors: true
-    });
+    var linesGeometry = null;
+    if (isInit) {
+	linesGeometry = new THREE.Geometry();
+	var linesMaterial = new THREE.LineBasicMaterial({
+	    vertexColors: true
+	});
+	var lineMesh = new THREE.Line(
+	    linesGeometry, linesMaterial, THREE.LinePieces);
+	lineMesh.id = 'lines_mesh';
+	kyama.app.group.add(lineMesh);
+    } else {
+	var lineMesh = kyama.app.group.getObjectById('lines_mesh', false);
+	linesGeometry = lineMesh.geometry;
+	linesGeometry.colorsNeedUpdate = true;
+    }
     
     var radius = 8;
     var n = 300, n2 = n/2;
     for (var i = 0; i < kyama.dummy.samples.length; i++) {
-	var sphere = new THREE.SphereGeometry(radius, 10, 10);
 	var sampleLabel = kyama.dummy.randomAssigns[i];
 	var rndColor = kyama.app.generateRandomColorFromCircle(
 	    kyama.dummy.LABELS_NUM, sampleLabel
 	);
-	var material = new THREE.MeshBasicMaterial({
-	    color: (rndColor.r * 255 << 16 
-		    | rndColor.g * 255 << 8 | rndColor.b * 255),
-	    shininess: 255
-	});
 	
-	var mesh = new THREE.Mesh(sphere, material);
-	mesh.position.x = kyama.dummy.samples[i][0] * n - n2;
-	mesh.position.y = kyama.dummy.samples[i][1] * n - n2;
-	mesh.position.z = kyama.dummy.samples[i][2] * n - n2;
-	kyama.app.group.add(mesh);
+	if (isInit) {
+	    var sphere = new THREE.SphereGeometry(radius, 10, 10);
+	    var material = new THREE.MeshBasicMaterial({
+		color: (rndColor.r * 255 << 16 
+			| rndColor.g * 255 << 8 | rndColor.b * 255),
+		shininess: 255
+	    });
+	    
+	    var mesh = new THREE.Mesh(sphere, material);
+	    mesh.position.x = kyama.dummy.samples[i][0] * n - n2;
+	    mesh.position.y = kyama.dummy.samples[i][1] * n - n2;
+	    mesh.position.z = kyama.dummy.samples[i][2] * n - n2;
+	    mesh.id = 'sample_point_mesh_' + i;
+	    kyama.app.group.add(mesh);
+	    
+	    linesGeometry.vertices.push(new THREE.Vector3(
+		mesh.position.x, mesh.position.y, mesh.position.z
+	    ));
+	    linesGeometry.vertices.push(new THREE.Vector3(
+		kyama.dummy.means[sampleLabel][0] * n - n2, 
+		kyama.dummy.means[sampleLabel][1] * n - n2,
+		kyama.dummy.means[sampleLabel][2] * n - n2
+	    ));
 
-	linesGeometry.vertices.push(new THREE.Vector3(
-	    mesh.position.x, mesh.position.y, mesh.position.z
-	));
-	linesGeometry.vertices.push(new THREE.Vector3(
-	    kyama.dummy.means[sampleLabel][0] * n - n2, 
-	    kyama.dummy.means[sampleLabel][1] * n - n2,
-	    kyama.dummy.means[sampleLabel][2] * n - n2
-	));
-
-	linesGeometry.colors.push(new THREE.Color(
-	    rndColor.r * 255 << 16 
-		| rndColor.g * 255 << 8 | rndColor.b * 255));
-	linesGeometry.colors.push(new THREE.Color(
-	    rndColor.r * 255 << 16 
-		| rndColor.g * 255 << 8 | rndColor.b * 255));
+	    linesGeometry.colors.push(new THREE.Color(
+		rndColor.r * 255 << 16 
+		    | rndColor.g * 255 << 8 | rndColor.b * 255));
+	    linesGeometry.colors.push(new THREE.Color(
+		rndColor.r * 255 << 16 
+		    | rndColor.g * 255 << 8 | rndColor.b * 255));
+	} else {
+	    var mesh = kyama.app.group.getObjectById(
+		('sample_point_mesh_' + i),
+		false);
+	    mesh.material.color.setHex(
+		rndColor.r * 255 << 16 
+		    | rndColor.g * 255 << 8 | rndColor.b * 255);
+	    
+	    var srcIdx = (2 * i);
+	    var dstIdx = (2 * i + 1);
+	    var srcColor = linesGeometry.colors[srcIdx];
+	    srcColor.setHex(
+		rndColor.r * 255 << 16
+		    | rndColor.g * 255 << 8 | rndColor.b * 255);
+	    var dstColor = linesGeometry.colors[dstIdx];
+	    dstColor.setHex(
+		rndColor.r * 255 << 16 
+		    | rndColor.g * 255 << 8 | rndColor.b * 255);
+	}
     }
-
-    var lineMesh = new THREE.Line(linesGeometry, linesMaterial, THREE.LinePieces);
-    kyama.app.group.add(lineMesh);
 
     radius = 20;
     for (var i = 0; i < kyama.dummy.means.length; i++) {
-	var sphere = new THREE.SphereGeometry(radius, 10, 10);
 	var rndColor = kyama.app.generateRandomColorFromCircle(
 	    kyama.dummy.LABELS_NUM, i);
-	var material = new THREE.MeshPhongMaterial({
-	    color: (rndColor.r * 255 << 16 
-		    | rndColor.g * 255 << 8 | rndColor.b * 255),
-	    ambient: 0xaaaaaa,
-	    specular: 0xaaaaaa,
-	    shininess: 128
-	});
-	
-	var mesh = new THREE.Mesh(sphere, material);
-	mesh.position.x = kyama.dummy.means[i][0] * n - n2;
-	mesh.position.y = kyama.dummy.means[i][1] * n - n2;
-	mesh.position.z = kyama.dummy.means[i][2] * n - n2;
-	kyama.app.group.add(mesh);
+
+	if (isInit) {
+	    var sphere = new THREE.SphereGeometry(radius, 10, 10);
+	    var material = new THREE.MeshPhongMaterial({
+		color: (rndColor.r * 255 << 16 
+			| rndColor.g * 255 << 8 | rndColor.b * 255),
+		ambient: 0xaaaaaa,
+		specular: 0xaaaaaa,
+		shininess: 128
+	    });
+	    
+	    var mesh = new THREE.Mesh(sphere, material);
+	    mesh.position.x = kyama.dummy.means[i][0] * n - n2;
+	    mesh.position.y = kyama.dummy.means[i][1] * n - n2;
+	    mesh.position.z = kyama.dummy.means[i][2] * n - n2;
+	    mesh.id = 'centroid_mesh_' + i;
+	    kyama.app.group.add(mesh);
+	} else {
+	    var mesh = kyama.app.group.getObjectById(
+		('centroid_mesh_' + i),
+		false);
+
+	    mesh.position.x = kyama.dummy.means[i][0] * n - n2;
+	    mesh.position.y = kyama.dummy.means[i][1] * n - n2;
+	    mesh.position.z = kyama.dummy.means[i][2] * n - n2;
+
+	    mesh.material.color.setHex(
+		rndColor.r * 255 << 16 
+		    | rndColor.g * 255 << 8 | rndColor.b * 255);
+	}
     }
 };
 
@@ -154,7 +200,7 @@ var initializeSamplesGeometry = function() {
     kyama.app.scene.add(kyama.app.group);
 
     // update.
-    updateSamplesGeometry();
+    updateSamplesGeometry(true);
 };
 
 

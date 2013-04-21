@@ -23,6 +23,8 @@ class KMeans:
             cluster = Cluster()
             self._clusters.append(cluster)
 
+        self._centroids = []
+
     # 再初期化
     def _reinitialize(self):
         self.converged = False
@@ -62,7 +64,7 @@ class KMeans:
                              'a positional argument.'))
 
         self._reinitialize()
-        self._samples = samples
+        self._samples = np.array(samples)
 
     # セントロイドを受け取る
     # @notice set_samplesを呼び出す前に呼ばないこと！
@@ -73,7 +75,7 @@ class KMeans:
         
         self._reinitialize()
         for i, cluster in enumerate(self._clusters):
-            cluster.set_centroid(centroids[i])
+            cluster.set_centroid(np.array(centroids[i]))
 
         # 各クラスタのセントロイドを更新する
         self._centroids = [cluster.calc_centroid() 
@@ -218,6 +220,10 @@ class KMeans:
     # 呼び出された瞬間の内部状態を返す
     def get_clusters(self):
         return [cluster for cluster in self._clusters]
+
+    # 呼び出された瞬間のセントロイドを返す
+    def get_centroids(self):
+        return self._centroids
 
     # クラスタへの割り当てリストを返す
     def get_assign_list(self):

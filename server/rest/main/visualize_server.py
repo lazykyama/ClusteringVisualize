@@ -46,7 +46,9 @@ class VisualizeServer(BaseHTTPRequestHandler):
 
         # dispatch.
         # パフォーマンスを気にする場合は、self.wfileを渡して、ストリーム処理させるべき？
-        parsed_query = dict(qc.split("=") for qc in parsed_path.query.split("&"))
+        parsed_query_list = [qc.split('=') for qc in parsed_path.query.split('&')
+                             if qc.find('=') != -1]
+        parsed_query = dict(parsed_query_list)
         response = (self.dispatch_request(parsed_path.path))(
             parsed_path.path, parsed_query)
         
@@ -110,13 +112,13 @@ class VisualizeServer(BaseHTTPRequestHandler):
 
     # faviconがあれば返す
     def return_favicon(self, requested_path, requested_query):
-        response = VisualizeServer.create_empty_response()
+        response = HttpResponseWrapper.create_empty_response()
         if os.path.exists(VisualizeServer.FAVICON_PATH):
             # @todo キャッシュしておく？
             response[HttpResponseWrapper.KEY_RESPONSE_BODY] = self.load_file(
                 VisualizeServer.FAVICON_PATH)
         else: 
-            response = self.return_not_found(
+            response = HttpResponseWrapper.return_not_found(
                 requested_path, requested_query)
 
         return response

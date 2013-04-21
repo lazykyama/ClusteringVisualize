@@ -78,9 +78,11 @@ class KMeansRestController(RestSubController):
     KEY_K          = 'k'
 
     # レスポンスのキー文字列
-    KEY_RESPONSE_SESSION_ID = 'sessionId'
+    KEY_RESPONSE_SESSION_ID   = 'sessionId'
     KEY_RESPONSE_RESULT_PAIRS = 'resultPairs'
-
+    KEY_RESPONSE_CONVERGED    = 'isConverged'
+    KEY_RESPONSE_CENTROIDS    = 'centroids'
+    
     def __init__(self):
         self._storage = DataStorageConnector.connect()
         self._rand_data_gen = RandDataGenerator(dim = 3)
@@ -107,17 +109,19 @@ class KMeansRestController(RestSubController):
                 return True
 
             tmp_step = int(query[KMeansRestController.KEY_STEP], 10)
-            if tmp_step <= 0:
+            if tmp_step < 0:
                 return False
-        except: 
+        except:
             return False
+
         return True
 
     @staticmethod
     def _convert_instance_to_response_message(session_id, kmeans_inst):
         response_dict = {}
-        # セッションIDだけ先に追加しておく
+        # セッションID、収束状況は先に追加しておく
         response_dict[KMeansRestController.KEY_RESPONSE_SESSION_ID] = session_id
+        response_dict[KMeansRestController.KEY_RESPONSE_CONVERGED] = kmeans_inst.converged
 
         # サンプルと割り当ての組を作成し、リストに追加
         # 面倒なので両者のサイズは一致していると仮定
@@ -132,6 +136,15 @@ class KMeansRestController(RestSubController):
 
         # 結果リストを変換元オブジェクトに追加
         response_dict[KMeansRestController.KEY_RESPONSE_RESULT_PAIRS] = result_list
+
+        #  セントロイドのリストを作成し変換元オブジェクトに追加
+        centroid_list = []
+        centroids = kmeans_inst.get_centroids()
+        centroids_len = len(centroids)
+        for c in centroids:
+            centroid_list.append(c.tolist())
+        
+        response_dict[KMeansRestController.KEY_RESPONSE_CENTROIDS] = centroid_list
 
         # json化して返す
         response_json = json.dumps(response_dict)
@@ -155,7 +168,7 @@ class KMeansRestController(RestSubController):
         if query.has_key(KMeansRestController.KEY_STEP):
             step = int(query[KMeansRestController.KEY_STEP], 10)
 
-        if session_id is None or KMeansDataAccessor.exists_session(
+        if session_id is None or not KMeansDataAccessor.exists_session(
             self._storage, session_id):
             # セッションを新規作成する場合
             # セッションIDを払い出す

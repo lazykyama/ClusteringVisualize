@@ -2,10 +2,46 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
-    <title>クラスタリングビジュアライゼーション</title>
-    <script src="./js/app.js"></script>
+    <title>クラスタリング可視化</title>
+    <style>
+      body {
+      color: #cccccc;
+      font-family:Monospace;
+      font-size:13px;
+      text-align:center;
+      
+      background-color: #050505;
+      margin: 0px;
+      overflow: hidden;
+      }
+
+      #controls {
+      position: absolute;
+      top: 0px; width: 100%;
+      padding: 5px;
+      }
+    </style>
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script>
+      var kyama = {};
+    </script>
   </head>
   <body>
-    Under construction...
+    <div id="container"></div>
+    <div id="controls">
+      <label>サンプル数: 
+	<input id="sample_num_input" type="number" min="20" max="500" value="100"></input>
+      </label>
+      <label>クラスタ数:
+	<input id="cluster_num_input" type="number" min="3" max="10" value="5"></input>
+      </label>
+      <button id="rot_change_btn">start/stop rotation</button>
+      <button id="reset_btn">reset</button>
+      <button id="next_btn">next</button>
+    </div>
+    <script src="./js/threejs/three.js"></script>
+    <script src="./js/util.js"></script>
+    <script src="./js/conn.js"></script>
+    <script src="./js/app.js"></script>
   </body>
 </html>
