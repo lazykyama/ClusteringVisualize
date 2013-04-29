@@ -35,9 +35,11 @@ kyama.conn = kyama.conn || {};
  */
 kyama.conn.update = function(params, successFn, errorFn, completeFn) {
     // request.
+    var url = window.location.pathname.split('/contents/')[0] + '/rest/kmeans_result';
+    
     $.ajax({
 	type : 'GET',
-	url : '/rest/kmeans_result',
+	url : url,
 	data : params,
 	cache : false
     })
