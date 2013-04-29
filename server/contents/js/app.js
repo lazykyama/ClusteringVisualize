@@ -150,13 +150,57 @@ kyama.app.stopAnimate = function() {
 };
 
 /**
+ * checks the input values.
+ * @param elm input form.
+ */
+kyama.app.checkAndGetInputValue = function(elm) {
+    var val = parseInt(elm.val(), 10);
+    var minVal = parseInt(elm.attr('min'), 10);
+    var maxVal = parseInt(elm.attr('max'), 10);
+
+    if (!isFinite(val)) {
+	throw new Error('invalid value.');
+    }
+
+    if (val < minVal || maxVal < val) {
+	throw new Error('out of range: val[' + elm.attr('id') + '] = ' + val
+			+ ', min = ' + minVal
+			+ ', max = ' + maxVal);
+    }
+
+    return val;
+};
+
+/**
  * callback method called when the reset button is clicked.
  */
 kyama.app.resetState = function() {
     console.debug('resetState.')
     // get current input values.
-    kyama.app.data.sampleSize  = parseInt($('#sample_num_input').val());
-    kyama.app.data.clusterSize = parseInt($('#cluster_num_input').val());
+    var sampleNum  = 0;
+    var clusterNum = 0;
+    try {
+	sampleNum  = kyama.app.checkAndGetInputValue($('#sample_num_input'));
+    } catch (e) {
+	kyama.app.showAlert('Input sample size is invalid: range -> [' +
+			    $('#sample_num_input').attr('min')
+			   + ', ' + $('#sample_num_input').attr('max')
+			   + ']');
+	return ;
+    }
+    try {
+	clusterNum = kyama.app.checkAndGetInputValue($('#cluster_num_input'));
+    } catch (e) {
+	kyama.app.showAlert('Input cluster size is invalid: range -> [' +
+			    $('#cluster_num_input').attr('min')
+			   + ', ' + $('#cluster_num_input').attr('max')
+			   + ']');
+	return ;
+    }
+
+    // set input values.
+    kyama.app.data.sampleSize  = sampleNum;
+    kyama.app.data.clusterSize = clusterNum;
     kyama.app.data.sessionId   = null;
     kyama.app.step = 0;
     
