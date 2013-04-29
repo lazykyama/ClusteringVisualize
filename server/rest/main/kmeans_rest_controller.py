@@ -25,6 +25,8 @@ class KMeansDataAccessor:
     _KEY_ASSIGNS   = 'assigns'
     _KEY_CENTROIDS = 'centroids'
     
+    _EXPIRE_IN_SEC = (24 * 60 * 60)
+    
     @staticmethod
     def exists_session(storage, session_id):
         return storage.exists_value(session_id)
@@ -49,7 +51,8 @@ class KMeansDataAccessor:
         kmeans_json = json.dumps(kmeans_json_dict)
 
         # jsonをセット
-        storage.set_value(session_id, kmeans_json)
+        storage.set_value(key = session_id, value = kmeans_json, 
+                          expire_in_sec = KMeansDataAccessor._EXPIRE_IN_SEC)
         return 
 
     @staticmethod
