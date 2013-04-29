@@ -20,6 +20,7 @@ class VisualizeServer(BaseHTTPRequestHandler):
     def do_GET(self):
         # リクエストをパース
         parsed_path = urlparse.urlparse(self.path)
+        """
         message_parts = [
                 'CLIENT VALUES:',
                 'client_address=%s (%s)' % (self.client_address,
@@ -43,6 +44,7 @@ class VisualizeServer(BaseHTTPRequestHandler):
         message = '\r\n'.join(message_parts)
         print 'info: '
         print message
+        """
 
         # dispatch.
         # パフォーマンスを気にする場合は、self.wfileを渡して、ストリーム処理させるべき？

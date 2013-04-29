@@ -22,13 +22,25 @@ kyama.util.version = '0.0.1';
 kyama.util.constant = kyama.constant || {};
 kyama.util.constant.TWO_PI_DEGREE = 360.0;
 
-// generate random color on 
-kyama.util.generateRandomColorFromCircle = function(splitSize, index) {
+/**
+ * pick a rgb color on circle.
+ * @param splitSize the number of intervals on circle.
+ * @param index the index of intervals on circle.
+ * @return rgbObj the object represents RGB color.
+ *         rgbObj.r is red channel value in [0, 1].
+ *         rgbObj.g is green channel value in [0, 1].
+ *         rgbObj.b is blue channel value in [0, 1].
+ */
+kyama.util.pickRGBColorOnCircle = function(splitSize, index) {
     if (splitSize <= 0) {
 	throw new Error('negative splitSize[' + splitSize + '] is invalid.');
     }
     if (index < 0) {
 	throw new Error('negative index[' + index + '] is invalid.');
+    }
+    if (splitSize <= index) {
+	throw new Error('too large index[' + index + '] is invalid, splitSize = '
+			+ splitSize);
     }
 
     var interval = kyama.util.constant.TWO_PI_DEGREE / splitSize;

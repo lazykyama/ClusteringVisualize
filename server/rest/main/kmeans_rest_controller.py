@@ -20,9 +20,10 @@ from base_storage import *
 
 # データアクセス用クラス
 class KMeansDataAccessor:
-    _KEY_PARAM_K = 'k'
-    _KEY_SAMPLES = 'samples'
-    _KEY_ASSIGNS = 'assigns'
+    _KEY_PARAM_K   = 'k'
+    _KEY_SAMPLES   = 'samples'
+    _KEY_ASSIGNS   = 'assigns'
+    _KEY_CENTROIDS = 'centroids'
     
     @staticmethod
     def exists_session(storage, session_id):
@@ -31,12 +32,19 @@ class KMeansDataAccessor:
     @staticmethod
     def store_session(storage, session_id, kmeans_instance):
         # 必要な値をjsonに変換し、実際のアクセッサに渡す
-        # 格納対象は、k, samples, assignments
+        # 格納対象は、k, samples, assignments, centroids
         kmeans_json_dict = {}
         kmeans_json_dict[KMeansDataAccessor._KEY_PARAM_K] = kmeans_instance.k
         samples = kmeans_instance.get_samples()
         kmeans_json_dict[KMeansDataAccessor._KEY_SAMPLES] = samples.tolist()
         kmeans_json_dict[KMeansDataAccessor._KEY_ASSIGNS] = kmeans_instance.get_assign_list()
+
+        centroid_list = []
+        centroids = kmeans_instance.get_centroids()
+        centroids_len = len(centroids)
+        for c in centroids:
+            centroid_list.append(c.tolist())
+        kmeans_json_dict[KMeansDataAccessor._KEY_CENTROIDS] = centroid_list
         
         kmeans_json = json.dumps(kmeans_json_dict)
 
@@ -58,6 +66,8 @@ class KMeansDataAccessor:
             kmeans_json_dict[KMeansDataAccessor._KEY_SAMPLES])
         kmeans_inst.set_init_assign(
             kmeans_json_dict[KMeansDataAccessor._KEY_ASSIGNS])
+        kmeans_inst.set_centroids(
+            kmeans_json_dict[KMeansDataAccessor._KEY_CENTROIDS])
         
         return kmeans_inst
 
@@ -205,6 +215,7 @@ class KMeansRestController(RestSubController):
         # サンプルサイズが変更された場合は、指定サイズのデータセットを新規作成する
         # 変更がなければ何もしない
         if size != kmeans_inst.get_samples_size():
+            print 'replace samples.'
             # サンプルを再作成し、置き換える
             new_samples = self._rand_data_gen.generate_multivariate_norm(
                 KMeansRestController.DEFAULT_MEAN,
@@ -216,6 +227,7 @@ class KMeansRestController(RestSubController):
         # 同様に、クラスタ数が変更された場合は、初期の割り当てをやり直す
         # クラスタ数に変更がなければ何もしない
         if param_k != kmeans_inst.k:
+            print 're-assignment.'
             # 初期割り当てからやり直す
             samples = kmeans_inst.get_samples()
             kmeans_inst = KMeans(k = param_k)

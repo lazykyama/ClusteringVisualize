@@ -56,7 +56,7 @@ class KMeans:
         self._centroids = [cluster.calc_centroid() 
                            for cluster in self._clusters]
         self.started = True
-        
+
     # サンプルを受け取る
     def set_samples(self, samples = None):
         if samples is None:

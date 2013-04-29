@@ -12,17 +12,35 @@ from nose.tools import *
 import data_generator
 from kmeans import *
 
+import numpy as np
+
 class TestKMeansBase(unittest.TestCase):
-    MEAN = [1,1,1]
-    COV  = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    SIZE = 10
+    MEAN  = np.array([1,1,1])
+    COV   = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    SCALE = 1.0
+    SIZE  = 10
 
     # util method.
-    def create_test_random_samples(self):
+    def create_test_random_samples(self, mean = None, cov = None,
+                                   scale = None, size = None):
+        sample_mean = TestKMeansBase.MEAN
+        sample_cov  = TestKMeansBase.COV
+        sample_scale = TestKMeansBase.SCALE
+        sample_size = TestKMeansBase.SIZE
+        if mean is not None:
+            sample_mean = mean
+        if cov is not None:
+            sample_cov = cov
+        if scale is not None:
+            sample_scale = scale
+        if size is not None:
+            sample_size = size
+
+        scaled_cov = sample_scale * sample_cov
+            
         rd_gen = data_generator.RandDataGenerator()
         samples = rd_gen.generate_multivariate_norm(
-            TestKMeansBase.MEAN, TestKMeansBase.COV,
-            TestKMeansBase.SIZE)
+            sample_mean, scaled_cov, sample_size)
         return samples
 
     def create_test_mixture_random_samples(self, k = 3):

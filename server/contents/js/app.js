@@ -76,6 +76,7 @@ kyama.app.onWindowResize = function() {
     kyama.app.camera.updateProjectionMatrix();
     
     kyama.app.renderer.setSize(window.innerWidth, window.innerHeight);
+    kyama.app.render(false);
 };
 
 /**
@@ -102,7 +103,7 @@ kyama.app.animate = function() {
     kyama.app.prevTime = kyama.app.currTime;
     kyama.app.currTime = Date.now();
     
-    kyama.app.render();
+    kyama.app.render(true);
 };
 
 /**
@@ -189,7 +190,7 @@ kyama.app.update = function(dataJson) {
     }
 
     if (!kyama.app.rotating) {
-	kyama.app.render();
+	kyama.app.render(false);
     }
 };
 
@@ -230,7 +231,11 @@ kyama.app.updateGeometry = function(wasReset) {
 	var radius = 8;
 	for (var i = 0; i < kyama.app.data.sampleSize; i++) {
 	    var sphere = new THREE.SphereGeometry(radius, 10, 10);
-	    var mesh = new THREE.Mesh(sphere);
+	    var material = new THREE.MeshLambertMaterial({
+		vertexColors: true,
+		specular: 0xaaaaaa
+	    });
+	    var mesh = new THREE.Mesh(sphere, material);
 	    kyama.app.group.add(mesh);
 	    mesh.id = kyama.app.constant.geometryKey.SAMPLE_MESH_ID_PREFIX + i;
 	}
@@ -240,8 +245,8 @@ kyama.app.updateGeometry = function(wasReset) {
 	for (var i = 0; i < kyama.app.data.clusterSize; i++) {
 	    var sphere = new THREE.SphereGeometry(radius, 10, 10);
 	    var material = new THREE.MeshPhongMaterial({
-		ambient: 0xaaaaaa,
-		specular: 0xaaaaaa
+		ambient: 0xffffff,
+		specular: 0xffffff
 	    });
 	    var mesh = new THREE.Mesh(sphere, material);
 	    kyama.app.group.add(mesh);
@@ -264,7 +269,7 @@ kyama.app.updateGeometry = function(wasReset) {
     for (var i = 0, srcIdx = 0; i < kyama.app.data.sampleSize; 
 	 i++, srcIdx = (2 * i)) {
 	var label = rawData[i][0];
-	var rndColor = kyama.util.generateRandomColorFromCircle(
+	var rndColor = kyama.util.pickRGBColorOnCircle(
 	    kyama.app.data.clusterSize, label);
 	var hexRndColor = (rndColor.r * 255 << 16
 	    | rndColor.g * 255 << 8 | rndColor.b * 255);
@@ -295,7 +300,7 @@ kyama.app.updateGeometry = function(wasReset) {
 
     // set coords & colors for centroids.
     for (var i = 0; i < kyama.app.data.clusterSize; i++) {
-	var rndColor = kyama.util.generateRandomColorFromCircle(
+	var rndColor = kyama.util.pickRGBColorOnCircle(
 	    kyama.app.data.clusterSize, i);
 	var hexRndColor = (rndColor.r * 255 << 16
 	    | rndColor.g * 255 << 8 | rndColor.b * 255);
@@ -354,11 +359,14 @@ kyama.app.init3DCanvas = function() {
 
 /**
  * callback method called to render the canvas.
+ * @param enableUpdateAngle defines if the angle is updated, or not.
  */
-kyama.app.render = function() {
-    var delta = (kyama.app.currTime -  kyama.app.prevTime);
-    var tmpY = kyama.app.group.rotation.y;
-    kyama.app.group.rotation.y = tmpY + (Math.PI * delta / 3000);
+kyama.app.render = function(enableUpdateAngle) {
+    if (enableUpdateAngle) {
+	var delta = (kyama.app.currTime -  kyama.app.prevTime);
+	var tmpY = kyama.app.group.rotation.y;
+	kyama.app.group.rotation.y = tmpY + (Math.PI * delta / 3000);
+    }
     
     kyama.app.renderer.render(
 	kyama.app.scene, kyama.app.camera);
