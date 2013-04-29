@@ -65,7 +65,7 @@ class VisualizeServer(BaseHTTPRequestHandler):
     def dispatch_request(self, requested_path):
         if requested_path.startswith('/contents/'):
             return self.return_contents
-        elif requested_path.startswith('/rest'):
+        elif requested_path.startswith('/rest/'):
             return self.execute_rest_request
         elif requested_path.startswith('/favicon.ico'):
             return self.return_favicon

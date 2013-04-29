@@ -20,6 +20,52 @@
       top: 0px; width: 100%;
       padding: 5px;
       }
+
+      .mask-wrapper {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      
+      display: none;
+      vertical-align: middle;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+      height: 100%;
+      }
+
+      #mask_area {
+      color: #cccccc;
+      font-family:Monospace;
+      font-size:32px;
+      text-align:center;
+
+      display: table-cell;
+      vertical-align: middle;
+      background-color: rgba(32, 32, 32, 0.75);
+      }
+
+      #notification_area {
+      color: #cccccc;
+      font-family:Monospace;
+      font-size:32px;
+      text-align:center;
+
+      display: table-cell;
+      vertical-align: middle;
+      background-color: rgba(128, 128, 128, 0.75);
+      }
+
+      #alert_area {
+      color: #f33;
+      font-family:Monospace;
+      font-size:32px;
+      text-align:center;
+
+      display: table-cell;
+      vertical-align: middle;
+      background-color: rgba(128, 128, 128, 0.75);
+      }
     </style>
     <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
     <script>
@@ -38,6 +84,18 @@
       <button id="rot_change_btn">start/stop rotation</button>
       <button id="reset_btn">reset</button>
       <button id="next_btn">next</button>
+    </div>
+    <div class="mask-wrapper" id="mask">
+      <div id="mask_area">
+      </div>
+    </div>
+    <div class="mask-wrapper" id="notification">
+      <div id="notification_area">
+      </div>
+    </div>
+    <div class="mask-wrapper" id="alert">
+      <div id="alert_area">
+      </div>
     </div>
     <script src="./js/threejs/three.js"></script>
     <script src="./js/util.js"></script>

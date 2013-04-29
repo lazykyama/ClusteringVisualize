@@ -30,14 +30,18 @@ kyama.conn = kyama.conn || {};
  * @param successFn callback method on success.
  *        successFn(json)
  * @param errorFn callback method on error.
+ *        errorFn(xhr, textStatus, errorThrown)
+ * @param completeFn callback method on complete.
  */
-kyama.conn.update = function(params, successFn, errorFn) {
+kyama.conn.update = function(params, successFn, errorFn, completeFn) {
     // request.
     $.ajax({
 	type : 'GET',
 	url : '/rest/kmeans_result',
 	data : params,
-	success : successFn, 
-	error : errorFn
-    });
+	cache : false
+    })
+    .done(successFn)
+    .fail(errorFn)
+    .always(completeFn);
 };

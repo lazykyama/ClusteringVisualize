@@ -37,6 +37,14 @@ kyama.app.constant.geometryKey.LINE_MESH_ID = 'lines_mesh';
 kyama.app.constant.geometryKey.SAMPLE_MESH_ID_PREFIX = 'sample_point_mesh_';
 kyama.app.constant.geometryKey.CENTROID_MESH_ID_PREFIX = 'centroid_mesh_';
 
+kyama.app.constant.maskKey = kyama.app.constant.maskKey || {};
+kyama.app.constant.maskKey.MASK_WRAPPER_ID = 'mask';
+kyama.app.constant.maskKey.MASK_AREA_ID = 'mask_area';
+kyama.app.constant.maskKey.NOTIF_WRAPPER_ID = 'notification';
+kyama.app.constant.maskKey.NOTIF_AREA_ID = 'notification_area';
+kyama.app.constant.maskKey.ALERT_WRAPPER_ID = 'alert';
+kyama.app.constant.maskKey.ALERT_AREA_ID = 'alert_area';
+
 /**
  * initialize.
  */
@@ -55,16 +63,41 @@ kyama.app.init = function() {
     var changeBtn = $('#rot_change_btn');
     var resetBtn  = $('#reset_btn');
     var nextBtn   = $('#next_btn');
+    var notif = $('#' + kyama.app.constant.maskKey.NOTIF_AREA_ID);
+    var alertArea = $('#' + kyama.app.constant.maskKey.ALERT_AREA_ID);
 
     changeBtn.on('click', kyama.app.changeRotation);
     resetBtn.on('click', kyama.app.resetState);
     nextBtn.on('click', kyama.app.executeNextStep);
+    notif.on('click', kyama.app.hideNotification);
+    alertArea.on('click', kyama.app.hideAlert);
 
     // initialize for WebGL.
     kyama.app.init3DCanvas();
     
     // reset state.
     kyama.app.resetState();
+};
+
+/**
+ * callback method called when the alert area hides.
+ */
+kyama.app.hideAlert = function() {
+    $('#' + kyama.app.constant.maskKey.ALERT_WRAPPER_ID).hide();
+};
+
+/**
+ * callback method called when the notification area hides.
+ */
+kyama.app.hideNotification = function() {
+    $('#' + kyama.app.constant.maskKey.NOTIF_WRAPPER_ID).hide();
+};
+
+/**
+ * callback method called when the mask area hides.
+ */
+kyama.app.hideMask = function() {
+    $('#' + kyama.app.constant.maskKey.MASK_WRAPPER_ID).hide();
 };
 
 /**
@@ -145,12 +178,32 @@ kyama.app.executeNextStep = function() {
     params.size = kyama.app.data.sampleSize;
     params.k    = kyama.app.data.clusterSize;
 
+    // show mask.
+    kyama.app.showMask('loading...');
+    
     // reset sample dataset and cluster assigns.
-    kyama.conn.update(params,
-	kyama.app.update, 
-	function() {
-	    console.error('fail...');
-	});
+    kyama.conn.update(
+	params,
+	kyama.app.update,
+	kyama.app.onUpdateFail,
+	kyama.app.hideMask
+    );
+};
+
+/**
+ * callback method called when error occured on server connection.
+ */
+kyama.app.onUpdateFail = function(xhr, textStatus, errorThrown) {
+    var alertText = '';
+    if (400 <= xhr.status && xhr.status < 500) {
+	alertText = 'contents sends the invalid request.';
+    } else if (500 <= xhr.status && xhr.status < 600) {
+	alertText = 'error occurs on server.';
+    } else if (0 === xhr.status) {
+	alertText = 'unknown error: ' + xhr.state();
+    }
+    
+    kyama.app.showAlert(alertText);
 };
 
 /**
@@ -183,7 +236,7 @@ kyama.app.update = function(dataJson) {
     console.debug('isConverged: ' + converged);
     if (converged) {
 	// notify learning is converged.
-	console.debug('converged!');
+	kyama.app.showNotification('Learning is completed.');
     } else {
 	// update geometry.
 	kyama.app.updateGeometry(wasReset);
@@ -192,6 +245,48 @@ kyama.app.update = function(dataJson) {
     if (!kyama.app.rotating) {
 	kyama.app.render(false);
     }
+};
+
+/**
+ * shows alert.
+ * @param text is displayed in alert area.
+ */
+kyama.app.showAlert = function(text) {
+    var wrapper = $('#' + kyama.app.constant.maskKey.ALERT_WRAPPER_ID);
+    var alertArea = $('#' + kyama.app.constant.maskKey.ALERT_AREA_ID);
+
+    alertArea.text(text);
+    
+    wrapper.show();
+    wrapper.css('display', 'table');
+};
+
+/**
+ * shows notification.
+ * @param text is displayed in notification area.
+ */
+kyama.app.showNotification = function(text) {
+    var wrapper = $('#' + kyama.app.constant.maskKey.NOTIF_WRAPPER_ID);
+    var notif = $('#' + kyama.app.constant.maskKey.NOTIF_AREA_ID);
+
+    notif.text(text);
+    
+    wrapper.show();
+    wrapper.css('display', 'table');
+};
+
+/**
+ * shows mask.
+ * @param text is displayed in mask area.
+ */
+kyama.app.showMask = function(text) {
+    var wrapper = $('#' + kyama.app.constant.maskKey.MASK_WRAPPER_ID);
+    var mask = $('#' + kyama.app.constant.maskKey.MASK_AREA_ID);
+
+    mask.text(text);
+    
+    wrapper.show();
+    wrapper.css('display', 'table');
 };
 
 /**
