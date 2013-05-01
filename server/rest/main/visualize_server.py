@@ -3,6 +3,7 @@
 
 from BaseHTTPServer import BaseHTTPRequestHandler
 import urlparse
+import mimetypes
 
 import os
 
@@ -56,6 +57,8 @@ class VisualizeServer(BaseHTTPRequestHandler):
         
         # construct response.
         self.send_response(response[HttpResponseWrapper.KEY_RESPONSE_SC])
+        self.send_header('Content-Type',
+                         response[HttpResponseWrapper.KEY_RESPONSE_MIME])
         self.end_headers()
         self.wfile.write(response[HttpResponseWrapper.KEY_RESPONSE_BODY])
         
@@ -96,6 +99,13 @@ class VisualizeServer(BaseHTTPRequestHandler):
             # 上位ディレクトリを見ようとしておらず、かつ指定ファイルが存在
             response[HttpResponseWrapper.KEY_RESPONSE_BODY] = self.load_file(
                 abs_user_path)
+            mime_type, encoding = mimetypes.guess_type(abs_user_path)
+
+            if mime_type is None:
+                response[HttpResponseWrapper.KEY_RESPONSE_MIME] = 'unknown/unknown'
+            else:
+                response[HttpResponseWrapper.KEY_RESPONSE_MIME] = mime_type
+
         else:
             # 上位ディレクトリを見ていないが、指定ファイルがない
             response = HttpResponseWrapper.return_not_found(requested_path,
@@ -119,6 +129,7 @@ class VisualizeServer(BaseHTTPRequestHandler):
             # @todo キャッシュしておく？
             response[HttpResponseWrapper.KEY_RESPONSE_BODY] = self.load_file(
                 VisualizeServer.FAVICON_PATH)
+            response[HttpResponseWrapper.KEY_RESPONSE_MIME] = 'image/vnd.microsoft.icon'
         else: 
             response = HttpResponseWrapper.return_not_found(
                 requested_path, requested_query)

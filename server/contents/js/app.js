@@ -252,12 +252,19 @@ kyama.app.onUpdateFail = function(xhr, textStatus, errorThrown) {
 
 /**
  * updates the sample dataset and cluster assigns.
- * @param dataJson the server response json string.
+ * @param dataJson the server response json string or json object.
  */
 kyama.app.update = function(dataJson) {
     console.debug(dataJson);
 
-    var jsonObj = JSON.parse(dataJson);
+    var jsonObj = null;
+
+    if (typeof dataJson === 'string') {
+	// when received JSON is string.
+	jsonObj = JSON.parse(dataJson);
+    } else {
+	jsonObj = dataJson;
+    }
 
     var rawData = jsonObj[kyama.app.constant.kmeansResponseKey.RESULT_KEY];
     var sessionId = jsonObj[kyama.app.constant.kmeansResponseKey.SESSION_ID_KEY];

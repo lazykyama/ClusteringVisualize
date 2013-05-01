@@ -8,8 +8,9 @@ class RestSubController:
         raise NotImplementedError('Not override...')
 
     def create_success_response(self, body):
-        response =  HttpResponseWrapper.create_empty_response()
+        response = HttpResponseWrapper.create_empty_response()
         response[HttpResponseWrapper.KEY_RESPONSE_BODY] = body
+        response[HttpResponseWrapper.KEY_RESPONSE_MIME] = 'application/json'
         return response
 
     def create_bad_req_response(self):
