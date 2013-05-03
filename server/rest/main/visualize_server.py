@@ -64,6 +64,10 @@ class VisualizeServer(BaseHTTPRequestHandler):
         
         return
 
+    # サーバ情報を出力させないためにオーバーライドしておく
+    def version_string(self):
+        return ''
+
     # リクエストされたパスに応じて必要な関数を返す
     def dispatch_request(self, requested_path):
         if requested_path.startswith('/contents/'):
